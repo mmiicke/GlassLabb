@@ -1,5 +1,5 @@
-Micke är den bästa på jorden. This is our first commit.
+Micke tränar på Git. Have already done this.
 
-Skriver lite mer på denna.
+Skriver lite ännu mer på denna.
 
 
