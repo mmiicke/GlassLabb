@@ -1,1 +1,4 @@
-This is the second txt file that im making
+This is the second txt file that im making.
+
+
+changes to this one
