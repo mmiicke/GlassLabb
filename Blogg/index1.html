@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Blogg</title>
+
+    <!--Jquery, bootstrap-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+     <script src="http://code.jquery.com/jquery-latest.pack.js"></script>
+     <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="http://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
+    <script>
+
+        var jsonArray = []; //array med all data
+        var br = document.createElement('br');
+        var commentsArray = [];
+//======================================================================================================================
+        $(document).ready(function() { //ajaxanrop hämtar blogginlägg från databasen
+            $.getJSON("index1.php?Controller/getFullJsonArray", function (result) {
+
+                jsonArray = result;
+                createList(result);
+            });
+        });
+//======================================================================================================================
+        $(document).ready(function() { //ajaxanrop hämtar samtliga kommentarer från databasen
+            $.getJSON("index1.php?Controller/getFullJsonCommentsArray", function (result) {
+                commentsArray = result;
+            });
+        });
+//======================================================================================================================
+        function like(id){ //funktion som ökar en tankes likes med 1
+
+            let post = {
+                "id" : id
+            }
+
+            $.post("index1.php?Controller/like", post, function () { //datat postas med hjälp av ajax post-method
+                updateView();
+            });
+        }
+//======================================================================================================================
+        function dislike(id){ //funktion som ökar en tankes dislikes med 1
+
+            let post = {
+                "id" : id
+            }
+
+            $.post("index1.php?Controller/dislike", post, function () { //datat postas med hjälp av ajax post-method
+                updateView();
+            });
+        }
+//======================================================================================================================
+
+        function createList(array){ //skapar upp html-objekt av innehållet i jsonarrayen, som skickas in som ett argument till metoden
+
+            var myThoughts = document.createElement('h1');
+            var myTxt = document.createTextNode("Mina tankar");
+            myThoughts.appendChild(myTxt);
+
+
+            $("#tankeDiv").html(myThoughts);
+
+            $.each(array, function (i, field) {
+
+
+                var thisTanke = document.createElement('div');
+                thisTanke.setAttribute('style', 'width:300px; border:1px solid grey');
+
+                var rubrik = document.createElement('h7');
+                rubrik.setAttribute('style', 'margin-right:10%;');
+                var rubrikTxt = document.createTextNode(array[i].rubrik);
+                rubrik.appendChild(rubrikTxt);
+                thisTanke.appendChild(rubrik);
+
+                var datum = document.createElement('h7');
+                datum.setAttribute('style', 'font-weight:bold;');
+                var datumTxt = document.createTextNode(array[i].datum);
+                datum.appendChild(datumTxt);
+                thisTanke.appendChild(datum);
+
+                var tanke = document.createElement('p');
+                tanke.setAttribute('style', 'font-style:italic');
+                var tankeTxt = document.createTextNode(array[i].tanke);
+                tanke.appendChild(tankeTxt);
+                thisTanke.appendChild(tanke);
+
+
+                var like = document.createElement('a'); //like.innerHTML = '<a onclick="like('+ array[i].id +')">&#x1F44D;</a> +' + array[i].likes;
+                like.setAttribute('style', 'float:left;');
+                like.setAttribute('style', 'padding-right:10px;');
+                like.setAttribute('onclick', 'like('+ array[i].id +')');
+                var likeTxt = document.createTextNode("\ud83d\udc4d " + array[i].likes);
+                like.appendChild(likeTxt);
+                thisTanke.appendChild(like);
+
+
+
+                var dislike = document.createElement('a'); //dislike.innerHTML = '<a onclick="dislike('+ array[i].id +')">&#x1f44e;</a> +' + array[i].dislikes;
+                dislike.setAttribute('style', 'float:left;');
+                dislike.setAttribute('style', 'display:block');
+                dislike.setAttribute('onclick', 'dislike('+ array[i].id +')');
+                var dislikeTxt = document.createTextNode("\ud83d\udc4e " + array[i].dislikes);
+                dislike.appendChild(dislikeTxt);
+                thisTanke.appendChild(dislike);
+
+
+
+                var showComments = document.createElement('a');
+                showComments.setAttribute('onclick', 'showComments('+array[i].id+')');
+                var showTxt = document.createTextNode("Visa kommentarer             ");
+                showComments.appendChild(showTxt);
+                thisTanke.appendChild(showComments);
+
+                var comment = document.createElement('a');
+                comment.setAttribute('onclick', 'comment('+ array[i].id +')')
+                var commentTxt = document.createTextNode("Kommentera");
+                comment.appendChild(commentTxt);
+                thisTanke.appendChild(comment);
+
+                $("#tankeDiv").append(thisTanke);
+
+            });
+        }
+//======================================================================================================================
+        //metod som visar alla kommentarer på ett specifikt id
+        function showComments(id){
+
+
+                    $("#commentsDiv").empty();
+                var commentsHead = document.createElement('h3');
+
+                $.each(jsonArray, function (i, field) {
+                    if (id == jsonArray[i].id) {
+
+                        var comTxt = document.createTextNode("Kommentar till tanken: " + jsonArray[i].rubrik);
+                        commentsHead.appendChild(comTxt);
+                        $("#commentsDiv").append(commentsHead);
+                    }
+                });
+
+                $.each(commentsArray, function (i, field) {
+                    if (commentsArray[i].tankeid == id) {
+                        var pDatum = document.createElement('p');
+                        var txtDatum = document.createTextNode(commentsArray[i].datum);
+                        pDatum.appendChild(txtDatum);
+                        $("#commentsDiv").append(pDatum);
+
+                        var pComment = document.createElement('p');
+                        var txtComment = document.createTextNode(commentsArray[i].kommentar);
+                        pComment.appendChild(txtComment);
+                        $("#commentsDiv").append(pComment);
+                    }
+                });
+        }
+
+//======================================================================================================================
+        //metod som skapar upp ett formulär och argumentet id skickas sedan vidare som argument in i metoden som postar datat
+        function comment(id){
+            $("#commentsDiv").empty();
+            var commentsHead = document.createElement('h3');
+
+            $.each(jsonArray, function (i, field) {
+                if(id == jsonArray[i].id){
+
+                    var comTxt = document.createTextNode("Kommentera tanken: " + jsonArray[i].rubrik);
+                    commentsHead.appendChild(comTxt);
+                    $("#commentsDiv").append(commentsHead);
+                }
+            });
+
+            var ta = document.createElement('textarea');
+            ta.setAttribute('id', 'comment');
+            $("#commentsDiv").append(ta);
+            $("#commentsDiv").append('<br>');
+
+            var comBtn = document.createElement('input');
+            comBtn.setAttribute('type', 'button');
+            comBtn.setAttribute('onclick', 'addComment('+ id +')');
+            comBtn.setAttribute('value', 'Kommentera');
+            $("#commentsDiv").append(comBtn);
+
+        }
+//======================================================================================================================
+        //denna metod tar med id (tankeid:t) och postar datat till databasen
+        function addComment(thisId){
+
+            let postData = {
+                "tankeid" : thisId,
+                "kommentar" : $("#comment").val()
+            }
+
+            $.post("index1.php?Controller/addComment", postData, function () {
+                alert("Kommentaren sparad! \n Klicka på Visa kommentar för att se den senaste kommentaren.");
+                updateView();
+            });
+
+            $("#commentsDiv").empty();
+            showComments(thisId);
+
+        }
+//======================================================================================================================
+        //metod som postar en ny tanke till databasen
+        function addThought(){
+
+            let postData = {
+                "rubrik" : $("#nyRubrik").val(),
+                "tanke" : $("#nyTanke").val()
+            }
+
+            $.post("index1.php?Controller/addThought", postData, function () {
+                updateView();
+            });
+
+        }
+//======================================================================================================================
+        //Hjälpmetod för att uppdatera vy och arrayer efter utförda CRUD-operationer
+        function updateView(){
+            $.getJSON("index1.php?Controller/getFullJsonArray", function (result) {
+                jsonArray = result;
+                createList(result);
+            });
+            $.getJSON("index1.php?Controller/getFullJsonCommentsArray", function (result) {
+                commentsArray = result;
+            });
+        }
+//======================================================================================================================
+        //Metod som adminvyn när man klickat på den länken
+        function showAdminView() {
+            document.getElementById('adminDiv').setAttribute('style', 'visibility:visible');
+        }
+//======================================================================================================================
+        //Metod som visar uservyn när man klickat på den länken
+        function showUserView(){
+            document.getElementById('adminDiv').setAttribute('style', 'visibility:hidden');
+        }
+
+    </script>
+    <style>
+        body
+        {
+            font-family: Arial;
+            background-color:lightblue;
+            padding-left: 300px;
+        }
+
+    </style>
+</head>
+
+<body>
+
+
+
+<!--För att kunna skifta mellan adminvy och uservy. En enklare version utan textfält med inloggningsuppgifter. -->
+<a onclick="showAdminView()" style="float:left;">Till adminvy...</a><br>
+
+
+<div id="adminDiv" style="padding:2%; width:20%;float:left; visibility:hidden">
+    <a onclick="showUserView()">Till uservy...</a>
+    <h2>Lägg till tanke</h2>
+    <p>Rubrik</p>
+    <input type="text" id="nyRubrik" /><br>
+    <p>Tanke för dagen</p>
+    <textarea id="nyTanke">
+
+
+    </textarea>
+    <br>
+
+    <input type="button" value="Spara tanke" onclick="addThought()">
+</div>
+
+<div id="tankeDiv" style="width:30%; float:left;">
+
+</div>
+
+
+    <div id="commentsDiv" style="width:30%; float:left;">
+
+    </div>
+
+
+<span id="bottom">  </span>
+</body>
+</html>
